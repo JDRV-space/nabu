@@ -1,0 +1,66 @@
+[package]
+name = "nabu"
+version = "0.1.0"
+edition = "2021"
+description = "Speed reading (RSVP) web app built with Rust and WebAssembly"
+repository = "https://github.com/JDRV-space/nabu"
+license = "MIT"
+readme = "README.md"
+keywords = ["rsvp", "speed-reading", "wasm", "leptos"]
+categories = ["wasm", "web-programming"]
+
+[dependencies]
+leptos = { version = "0.8", features = ["csr"] }
+leptos_router = "0.8"
+console_error_panic_hook = "0.1"
+wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4"
+web-sys = { version = "0.3", features = [
+    "Window",
+    "Document",
+    "Element",
+    "HtmlElement",
+    "HtmlInputElement",
+    "HtmlTextAreaElement",
+    "File",
+    "FileList",
+    "FileReader",
+    "Blob",
+    "Event",
+    "DragEvent",
+    "DataTransfer",
+    "KeyboardEvent",
+    "TouchEvent",
+    "Touch",
+    "TouchList",
+    "Storage",
+    "IdbFactory",
+    "IdbDatabase",
+    "IdbTransaction",
+    "IdbObjectStore",
+    "IdbRequest",
+    "IdbKeyRange",
+    "Navigator",
+    "Performance",
+] }
+js-sys = "0.3"
+gloo = { version = "0.11", features = ["futures", "timers", "storage", "file"] }
+gloo-events = "0.2"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+indexed_db_futures = "0.5"
+ammonia = "4"
+aes-gcm = "0.10"
+rand = { version = "0.8", features = ["getrandom"] }
+getrandom = { version = "0.2", features = ["js"] }
+base64 = "0.22"
+chrono = { version = "0.4", features = ["wasmbind"] }
+thiserror = "2.0"
+pulldown-cmark = "0.12"
+futures-channel = "0.3"
+
+[profile.release]
+opt-level = 'z'
+lto = true
+codegen-units = 1
+panic = "abort"
