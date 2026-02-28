@@ -1,10 +1,6 @@
 <div align="center">
 
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:1a1a2e,100:d4a847&height=220&section=header&text=NABU&fontSize=80&fontColor=d4a847&animation=fadeIn&desc=Speed%20Reading%20for%20the%20Modern%20Mind&descAlignY=65&descSize=18&fontAlignY=38" width="100%"/>
-
-<p>
-  <img src="https://readme-typing-svg.demolab.com/?font=JetBrains+Mono&size=20&duration=3000&pause=1000&color=D4A847&center=true&vCenter=true&width=600&lines=100+WPM+%E2%86%92+300+WPM+%E2%86%92+600+WPM+%E2%86%92+1000+WPM;Rust+%2B+WebAssembly+%2B+Leptos;Named+after+the+Mesopotamian+god+of+writing" alt="Typing SVG" />
-</p>
+<img src="./assets/header.svg" alt="NABU" width="100%"/>
 
 <img src="./assets/rsvp-demo.svg" alt="RSVP Demo" width="100%"/>
 
@@ -116,8 +112,6 @@ PRs welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
 ## Documentation
 
 - [Project Specification](docs/SPEC.md): design system, features, UI mockups
-
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:1a1a2e,100:d4a847&height=120&section=footer" width="100%"/>
 
 ## License
 
