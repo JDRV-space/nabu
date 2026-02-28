@@ -1,34 +1,132 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 180">
-  <style>
-    @keyframes word1 { 0%,18% { opacity: 1; } 20%,100% { opacity: 0; } }
-    @keyframes word2 { 0%,20% { opacity: 0; } 22%,38% { opacity: 1; } 40%,100% { opacity: 0; } }
-    @keyframes word3 { 0%,40% { opacity: 0; } 42%,58% { opacity: 1; } 60%,100% { opacity: 0; } }
-    @keyframes word4 { 0%,60% { opacity: 0; } 62%,78% { opacity: 1; } 80%,100% { opacity: 0; } }
-    @keyframes word5 { 0%,80% { opacity: 0; } 82%,98% { opacity: 1; } 100% { opacity: 0; } }
-    .rsvp-word { font-family: 'Segoe UI', Arial, sans-serif; font-size: 18px; fill: #d4a847; }
-    .w1 { animation: word1 3s infinite; }
-    .w2 { animation: word2 3s infinite; }
-    .w3 { animation: word3 3s infinite; }
-    .w4 { animation: word4 3s infinite; }
-    .w5 { animation: word5 3s infinite; }
-  </style>
-  <rect width="800" height="180" fill="#0d1117"/>
-  <!-- NABU title -->
-  <text x="400" y="68" text-anchor="middle" font-family="'Segoe UI', Arial, sans-serif" font-size="56" font-weight="700" fill="#ffaa00" letter-spacing="12">NABU</text>
-  <!-- Cuneiform-inspired decorative line -->
-  <line x1="280" y1="82" x2="520" y2="82" stroke="#ffaa00" stroke-width="1.5" opacity="0.4"/>
-  <polygon points="280,82 286,79 286,85" fill="#ffaa00" opacity="0.4"/>
-  <polygon points="520,82 514,79 514,85" fill="#ffaa00" opacity="0.4"/>
-  <rect x="370" y="80" width="4" height="4" fill="#ffaa00" opacity="0.5" rx="0.5"/>
-  <rect x="396" y="80" width="4" height="4" fill="#ffaa00" opacity="0.5" rx="0.5"/>
-  <rect x="422" y="80" width="4" height="4" fill="#ffaa00" opacity="0.5" rx="0.5"/>
-  <!-- RSVP word flash animation -->
-  <rect x="320" y="95" width="160" height="30" rx="4" fill="#1a1a2e" stroke="#ffaa00" stroke-width="0.5" opacity="0.6"/>
-  <text x="400" y="116" text-anchor="middle" class="rsvp-word w1">knowledge</text>
-  <text x="400" y="116" text-anchor="middle" class="rsvp-word w2">flows</text>
-  <text x="400" y="116" text-anchor="middle" class="rsvp-word w3">through</text>
-  <text x="400" y="116" text-anchor="middle" class="rsvp-word w4">your</text>
-  <text x="400" y="116" text-anchor="middle" class="rsvp-word w5">eyes</text>
-  <!-- Tagline -->
-  <text x="400" y="155" text-anchor="middle" font-family="'Segoe UI', Arial, sans-serif" font-size="14" fill="#8b949e">Speed reading for the terminal</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 180" fill="none">
+  <defs>
+    <!-- Colors extracted from nabu/style.css :root vars -->
+    <!-- --bg: #070910, --bg-elevated: #0d1117, --amber: #c9a227 -->
+    <!-- --text: #f5f5f5, --text-muted: rgba(245,245,245,0.6) -->
+    <!-- --border: rgba(255,255,255,0.08), --glass-bg: rgba(13,17,23,0.85) -->
+    <!-- Font: Space Grotesk -->
+    <linearGradient id="bg" x1="0" y1="0" x2="800" y2="180" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#070910"/>
+      <stop offset="100%" stop-color="#0d1117"/>
+    </linearGradient>
+    <radialGradient id="amberGlow" cx="50%" cy="0%" r="55%">
+      <stop offset="0%" stop-color="#c9a227" stop-opacity="0.05"/>
+      <stop offset="100%" stop-color="#c9a227" stop-opacity="0"/>
+    </radialGradient>
+    <style>
+      @keyframes rsvpCycle {
+        0%, 16%  { opacity: 1; }
+        18%, 100% { opacity: 0; }
+      }
+      @keyframes rsvp2 {
+        0%, 18%  { opacity: 0; }
+        20%, 36% { opacity: 1; }
+        38%, 100% { opacity: 0; }
+      }
+      @keyframes rsvp3 {
+        0%, 38%  { opacity: 0; }
+        40%, 56% { opacity: 1; }
+        58%, 100% { opacity: 0; }
+      }
+      @keyframes rsvp4 {
+        0%, 58%  { opacity: 0; }
+        60%, 76% { opacity: 1; }
+        78%, 100% { opacity: 0; }
+      }
+      @keyframes rsvp5 {
+        0%, 78%  { opacity: 0; }
+        80%, 96% { opacity: 1; }
+        98%, 100% { opacity: 0; }
+      }
+      @keyframes progressFill {
+        0% { width: 0; }
+        100% { width: 480; }
+      }
+      .w1 { animation: rsvpCycle 4s infinite; }
+      .w2 { animation: rsvp2 4s infinite; }
+      .w3 { animation: rsvp3 4s infinite; }
+      .w4 { animation: rsvp4 4s infinite; }
+      .w5 { animation: rsvp5 4s infinite; }
+    </style>
+  </defs>
+
+  <!-- Background: --bg gradient -->
+  <rect width="800" height="180" fill="url(#bg)"/>
+  <rect width="800" height="180" fill="url(#amberGlow)"/>
+
+  <!-- Glass panel (.glass-panel from CSS) -->
+  <rect x="40" y="16" width="720" height="148" rx="12" ry="12"
+        fill="#0d1117" fill-opacity="0.85" stroke="white" stroke-opacity="0.08" stroke-width="1"/>
+
+  <!-- Keyboard hints (.keyboard-hints style, --text-muted 0.6 opacity, --font-size-xs) -->
+  <text x="72" y="40" font-family="'Space Grotesk',system-ui,sans-serif" font-size="9"
+        fill="#f5f5f5" fill-opacity="0.35" letter-spacing="0.02em">SPACE play  |  Arrows +/-WPM  |  R restart  |  F fullscreen</text>
+
+  <!-- WPM display (.wpm-display: --amber, font-weight 600, --font-size-lg) -->
+  <text x="718" y="40" font-family="'Space Grotesk',system-ui,sans-serif" font-size="13"
+        fill="#c9a227" text-anchor="end" font-weight="600">300 WPM</text>
+
+  <!-- ORP top guide line (.orp-line-top: --amber, height 12px) -->
+  <line x1="400" y1="50" x2="400" y2="64" stroke="#c9a227" stroke-width="1" opacity="0.7"/>
+  <line x1="400" y1="50" x2="400" y2="64" stroke="#c9a227" stroke-width="4" opacity="0.12"/>
+
+  <!-- RSVP word display area (animated words, .word-orp = --amber, .word-before/.word-after = --text) -->
+  <!-- Word: "nabu" with ORP on 'a' -->
+  <g class="w1">
+    <text x="380" y="95" font-family="'Space Grotesk',system-ui,sans-serif" font-size="40" font-weight="500"
+          fill="#f5f5f5" text-anchor="end" letter-spacing="-0.02em">n</text>
+    <text x="383" y="95" font-family="'Space Grotesk',system-ui,sans-serif" font-size="40" font-weight="500"
+          fill="#c9a227" letter-spacing="-0.02em">a</text>
+    <text x="407" y="95" font-family="'Space Grotesk',system-ui,sans-serif" font-size="40" font-weight="500"
+          fill="#f5f5f5" letter-spacing="-0.02em">bu</text>
+  </g>
+  <!-- Word: "speed" with ORP on 'e' -->
+  <g class="w2" opacity="0">
+    <text x="375" y="95" font-family="'Space Grotesk',system-ui,sans-serif" font-size="40" font-weight="500"
+          fill="#f5f5f5" text-anchor="end" letter-spacing="-0.02em">sp</text>
+    <text x="378" y="95" font-family="'Space Grotesk',system-ui,sans-serif" font-size="40" font-weight="500"
+          fill="#c9a227" letter-spacing="-0.02em">e</text>
+    <text x="399" y="95" font-family="'Space Grotesk',system-ui,sans-serif" font-size="40" font-weight="500"
+          fill="#f5f5f5" letter-spacing="-0.02em">ed</text>
+  </g>
+  <!-- Word: "reader" with ORP on 'a' -->
+  <g class="w3" opacity="0">
+    <text x="374" y="95" font-family="'Space Grotesk',system-ui,sans-serif" font-size="40" font-weight="500"
+          fill="#f5f5f5" text-anchor="end" letter-spacing="-0.02em">re</text>
+    <text x="377" y="95" font-family="'Space Grotesk',system-ui,sans-serif" font-size="40" font-weight="500"
+          fill="#c9a227" letter-spacing="-0.02em">a</text>
+    <text x="400" y="95" font-family="'Space Grotesk',system-ui,sans-serif" font-size="40" font-weight="500"
+          fill="#f5f5f5" letter-spacing="-0.02em">der</text>
+  </g>
+  <!-- Word: "wasm" with ORP on 'a' -->
+  <g class="w4" opacity="0">
+    <text x="385" y="95" font-family="'Space Grotesk',system-ui,sans-serif" font-size="40" font-weight="500"
+          fill="#f5f5f5" text-anchor="end" letter-spacing="-0.02em">w</text>
+    <text x="388" y="95" font-family="'Space Grotesk',system-ui,sans-serif" font-size="40" font-weight="500"
+          fill="#c9a227" letter-spacing="-0.02em">a</text>
+    <text x="413" y="95" font-family="'Space Grotesk',system-ui,sans-serif" font-size="40" font-weight="500"
+          fill="#f5f5f5" letter-spacing="-0.02em">sm</text>
+  </g>
+  <!-- Word: "leptos" with ORP on 'p' -->
+  <g class="w5" opacity="0">
+    <text x="377" y="95" font-family="'Space Grotesk',system-ui,sans-serif" font-size="40" font-weight="500"
+          fill="#f5f5f5" text-anchor="end" letter-spacing="-0.02em">le</text>
+    <text x="380" y="95" font-family="'Space Grotesk',system-ui,sans-serif" font-size="40" font-weight="500"
+          fill="#c9a227" letter-spacing="-0.02em">p</text>
+    <text x="403" y="95" font-family="'Space Grotesk',system-ui,sans-serif" font-size="40" font-weight="500"
+          fill="#f5f5f5" letter-spacing="-0.02em">tos</text>
+  </g>
+
+  <!-- ORP bottom guide line -->
+  <line x1="400" y1="100" x2="400" y2="114" stroke="#c9a227" stroke-width="1" opacity="0.7"/>
+  <line x1="400" y1="100" x2="400" y2="114" stroke="#c9a227" stroke-width="4" opacity="0.12"/>
+
+  <!-- Subtitle (--text-muted, uppercase, letter-spacing 0.1em) -->
+  <text x="400" y="136" font-family="'Space Grotesk',system-ui,sans-serif" font-size="10"
+        fill="#f5f5f5" fill-opacity="0.6" text-anchor="middle" letter-spacing="0.12em"
+        font-weight="500">SPEED READER  /  RSVP  /  RUST + WASM</text>
+
+  <!-- Progress bar (.progress-bar: --border bg, .progress-bar-fill: --amber) -->
+  <rect x="60" y="150" width="680" height="3" rx="1.5" fill="white" fill-opacity="0.08"/>
+  <rect x="60" y="150" width="420" height="3" rx="1.5" fill="#c9a227"/>
 </svg>
