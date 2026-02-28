@@ -1,8 +1,18 @@
+<div align="center">
+
 # Nabu
 
 Speed reading app built with Rust and WebAssembly. Named after the Mesopotamian god of writing and wisdom.
 
-**Live demo:** https://nabu-reader.vercel.app
+[![Live Demo](https://img.shields.io/badge/Live-nabu--reader.vercel.app-FF4136?style=for-the-badge&logo=vercel&logoColor=white)](https://nabu-reader.vercel.app)
+[![Rust](https://img.shields.io/badge/Rust-000000?style=for-the-badge&logo=rust&logoColor=white)](https://www.rust-lang.org/)
+[![WebAssembly](https://img.shields.io/badge/WebAssembly-654FF0?style=for-the-badge&logo=webassembly&logoColor=white)](https://webassembly.org/)
+[![Leptos](https://img.shields.io/badge/Leptos_0.8-EF3939?style=for-the-badge&logo=rust&logoColor=white)](https://leptos.dev/)
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/JDRV-space/nabu/pulls)
+
+</div>
 
 Uses RSVP (Rapid Serial Visual Presentation) to flash words at configurable speeds. Everything runs client-side, your documents never leave your browser.
 
