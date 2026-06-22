@@ -4,7 +4,7 @@ Mesopotamian god of writing, scribes, literacy, and wisdom.
 
 ## Tech Stack
 - **Framework:** Leptos (Rust WASM)
-- **Storage:** IndexedDB with AES-GCM encryption
+- **Storage:** IndexedDB with AES-GCM encryption; key stored in browser `localStorage`
 - **Deploy:** Vercel (auto-deploy from GitHub)
 - **UI Style:** Dark theme, amber accents, Space Grotesk
 
@@ -564,6 +564,10 @@ Content-Security-Policy:
   object-src 'none';
   base-uri 'self';
 ```
+
+### Client-Side Storage Limits
+
+Documents are kept in IndexedDB and encrypted before storage. The key is stored in browser `localStorage` as `nabu_key`, so this protects against server upload because there is no backend document store. It does not protect against a compromised browser, extension, device, or browser profile.
 
 ### Key Crates
 - `ammonia` - HTML sanitization (XSS prevention)
