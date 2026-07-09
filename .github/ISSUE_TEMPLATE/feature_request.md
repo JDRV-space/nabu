@@ -24,4 +24,4 @@ Any alternative solutions or features you've considered.
 
 ## Additional Context
 
-Any other context, mockups, or screenshots about the feature request.
+Any other context, design references, or screenshots about the feature request.

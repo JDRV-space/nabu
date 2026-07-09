@@ -1,10 +1,10 @@
+use js_sys::{Promise, Uint8Array};
+use pulldown_cmark::{Event, Parser, Tag, TagEnd};
+use thiserror::Error;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::JsFuture;
 use web_sys::{File, FileReader};
-use js_sys::{Uint8Array, Function, Promise};
-use thiserror::Error;
-use pulldown_cmark::{Parser, Event, Tag, TagEnd};
 
 use crate::state::Document;
 
@@ -55,7 +55,7 @@ pub async fn parse_file(file: File) -> Result<Document, ParseError> {
     let sanitized = sanitize_content(&content);
 
     let title = extract_title(&name);
-    let mut doc = Document::new(title, sanitized, file_type);
+    let doc = Document::new(title, sanitized, file_type);
 
     Ok(doc)
 }
@@ -72,7 +72,8 @@ fn get_file_type(name: &str) -> Result<String, ParseError> {
 }
 
 async fn validate_magic_bytes(file: &File, file_type: &str) -> Result<(), ParseError> {
-    let slice = file.slice_with_f64_and_f64(0.0, 8.0)
+    let slice = file
+        .slice_with_f64_and_f64(0.0, 8.0)
         .map_err(|_| ParseError::ReadError("Failed to slice file".into()))?;
 
     let array_buffer = JsFuture::from(slice.array_buffer())
@@ -139,13 +140,15 @@ async fn read_file_as_text(file: File) -> Result<String, ParseError> {
     reader.set_onload(Some(onload.as_ref().unchecked_ref()));
     reader.set_onerror(Some(onerror.as_ref().unchecked_ref()));
 
-    reader.read_as_text(&file)
+    reader
+        .read_as_text(&file)
         .map_err(|_| ParseError::ReadError("Failed to start reading".into()))?;
 
     onload.forget();
     onerror.forget();
 
-    rx.await.map_err(|_| ParseError::ReadError("Channel closed".into()))?
+    rx.await
+        .map_err(|_| ParseError::ReadError("Channel closed".into()))?
 }
 
 async fn parse_txt(file: File) -> Result<String, ParseError> {
@@ -202,7 +205,9 @@ async fn parse_docx(file: File) -> Result<String, ParseError> {
     let result = JsFuture::from(extract_docx_text(&array_buffer))
         .await
         .map_err(|e| {
-            let msg = e.as_string().unwrap_or_else(|| "DOCX parsing failed".into());
+            let msg = e
+                .as_string()
+                .unwrap_or_else(|| "DOCX parsing failed".into());
             ParseError::ParseError(msg)
         })?;
 

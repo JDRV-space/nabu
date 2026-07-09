@@ -64,12 +64,6 @@ pub fn Library() -> impl IntoView {
             <Show when=move || show_upload.get()>
                 <super::upload::UploadModal on_close=move || set_show_upload.set(false) />
             </Show>
-
-            // TODO: Re-enable stats nav when tracking is implemented
-            // <nav class="bottom-nav glass-panel">
-            //     <a href="/" class="nav-item active">"Library"</a>
-            //     <a href="/stats" class="nav-item">"Stats"</a>
-            // </nav>
         </div>
     }
 }

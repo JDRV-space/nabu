@@ -1,11 +1,11 @@
+use aes_gcm::aead::{Aead, KeyInit};
+use aes_gcm::{Aes256Gcm, Key, Nonce};
+use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
 use indexed_db_futures::prelude::*;
 use indexed_db_futures::web_sys::DomException;
-use wasm_bindgen::JsValue;
-use serde::{Serialize, de::DeserializeOwned};
-use aes_gcm::{Aes256Gcm, Key, Nonce};
-use aes_gcm::aead::{Aead, KeyInit};
-use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
+use serde::{de::DeserializeOwned, Serialize};
 use thiserror::Error;
+use wasm_bindgen::JsValue;
 
 use crate::state::Document;
 
@@ -46,8 +46,14 @@ impl Storage {
         Self { key }
     }
 
+    fn generate_key() -> [u8; 32] {
+        let mut key = [0u8; 32];
+        getrandom::getrandom(&mut key)
+            .expect("browser cryptographic random source is required for document encryption");
+        key
+    }
+
     fn get_or_create_key() -> [u8; 32] {
-        // Try to get key from localStorage, fallback to random key if anything fails
         if let Some(window) = web_sys::window() {
             if let Ok(Some(storage)) = window.local_storage() {
                 if let Ok(Some(key_b64)) = storage.get_item("nabu_key") {
@@ -60,27 +66,14 @@ impl Storage {
                     }
                 }
 
-                // Generate new key
-                let mut key = [0u8; 32];
-                if getrandom::getrandom(&mut key).is_err() {
-                    // Fallback: use a deterministic key based on timestamp
-                    let now = js_sys::Date::now() as u64;
-                    for i in 0..4 {
-                        let bytes = now.wrapping_add(i as u64).to_le_bytes();
-                        key[i*8..(i+1)*8].copy_from_slice(&bytes);
-                    }
-                }
-
+                let key = Self::generate_key();
                 let key_b64 = BASE64.encode(&key);
                 let _ = storage.set_item("nabu_key", &key_b64);
                 return key;
             }
         }
 
-        // Ultimate fallback: random key (won't persist)
-        let mut key = [0u8; 32];
-        let _ = getrandom::getrandom(&mut key);
-        key
+        Self::generate_key()
     }
 
     fn encrypt(&self, data: &[u8]) -> Result<Vec<u8>, StorageError> {
@@ -88,7 +81,8 @@ impl Storage {
         let cipher = Aes256Gcm::new(key);
 
         let mut nonce_bytes = [0u8; 12];
-        let _ = getrandom::getrandom(&mut nonce_bytes);
+        getrandom::getrandom(&mut nonce_bytes)
+            .map_err(|e| StorageError::EncryptionError(e.to_string()))?;
         let nonce = Nonce::from_slice(&nonce_bytes);
 
         let ciphertext = cipher
@@ -132,7 +126,9 @@ impl Storage {
             Ok(())
         }));
 
-        db_req.await.map_err(|e| StorageError::IdbError(format!("{:?}", e)))
+        db_req
+            .await
+            .map_err(|e| StorageError::IdbError(format!("{:?}", e)))
     }
 
     pub async fn save_document(&self, doc: &Document) -> Result<(), StorageError> {
@@ -140,8 +136,8 @@ impl Storage {
         let tx = db.transaction_on_one_with_mode(DOCUMENTS_STORE, IdbTransactionMode::Readwrite)?;
         let store = tx.object_store(DOCUMENTS_STORE)?;
 
-        let json = serde_json::to_vec(doc)
-            .map_err(|e| StorageError::SerializationError(e.to_string()))?;
+        let json =
+            serde_json::to_vec(doc).map_err(|e| StorageError::SerializationError(e.to_string()))?;
         let encrypted = self.encrypt(&json)?;
         let b64 = BASE64.encode(&encrypted);
 
@@ -160,7 +156,8 @@ impl Storage {
 
         if let Some(js_val) = result {
             if let Some(b64) = js_val.as_string() {
-                let encrypted = BASE64.decode(&b64)
+                let encrypted = BASE64
+                    .decode(&b64)
                     .map_err(|e| StorageError::SerializationError(e.to_string()))?;
                 let decrypted = self.decrypt(&encrypted)?;
                 let doc: Document = serde_json::from_slice(&decrypted)
@@ -212,7 +209,11 @@ impl Storage {
         Ok(())
     }
 
-    pub async fn save_setting<T: Serialize>(&self, key: &str, value: &T) -> Result<(), StorageError> {
+    pub async fn save_setting<T: Serialize>(
+        &self,
+        key: &str,
+        value: &T,
+    ) -> Result<(), StorageError> {
         let db = self.open_db().await?;
         let tx = db.transaction_on_one_with_mode(SETTINGS_STORE, IdbTransactionMode::Readwrite)?;
         let store = tx.object_store(SETTINGS_STORE)?;
@@ -226,7 +227,10 @@ impl Storage {
         Ok(())
     }
 
-    pub async fn get_setting<T: DeserializeOwned>(&self, key: &str) -> Result<Option<T>, StorageError> {
+    pub async fn get_setting<T: DeserializeOwned>(
+        &self,
+        key: &str,
+    ) -> Result<Option<T>, StorageError> {
         let db = self.open_db().await?;
         let tx = db.transaction_on_one(SETTINGS_STORE)?;
         let store = tx.object_store(SETTINGS_STORE)?;

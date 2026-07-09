@@ -1,585 +1,105 @@
-# Nabu - Speed Reader
+# Nabu Technical Specification
 
-Mesopotamian god of writing, scribes, literacy, and wisdom.
+Nabu is a client-side RSVP speed reader built with Rust, Leptos, WebAssembly,
+and browser storage APIs. It imports documents in the browser, stores them in
+IndexedDB, and presents text in timed word groups.
 
-## Tech Stack
-- **Framework:** Leptos (Rust WASM)
-- **Storage:** IndexedDB with AES-GCM encryption; key stored in browser `localStorage`
-- **Deploy:** Vercel (auto-deploy from GitHub)
-- **UI Style:** Dark theme, amber accents, Space Grotesk
+## Scope
 
----
+Nabu is a local browser app. It does not provide accounts, server-side document
+storage, sync, collaboration, sharing, or backup. The current reader supports
+TXT, Markdown, PDF, and DOCX input, configurable speed, configurable word group
+size, fullscreen reading, keyboard controls, and a browser-local document
+library.
 
-## Design Rules
-- **No goofy emojis.** Serious only if used (e.g., fire for streak)
-- **ORP highlight is AMBER (#ffaa00), not red** - red conflicts with error states
-- **Immersive focus** - controls hidden during reading, appear on pause
-- **Glassmorphism** - semi-transparent panels with blur
-- **Text scramble** - Signature animation on word transitions
+## Runtime Architecture
 
----
+```text
+index.html
+  loads same-origin parser assets, CSS, and the Trunk-generated WASM app
 
-## CRITICAL CONSTRUCTION RULES
+src/main.rs
+  mounts the Leptos app and routes between library, reader, settings, and stats
 
-**1. CLEAN REPO**
-- Extremely clean, organized, easy to understand
-- Clear folder structure, no clutter
-- Meaningful file/function names
-- Comments only where logic is non-obvious
+src/components/
+  renders upload, library, reader controls, settings, reader view, and stats UI
 
-**2. NO OVERENGINEERING**
-- Solve the problem, nothing more
-- No premature abstractions
-- No "future-proofing" for hypotheticals
-- Simple > clever
+src/state/
+  owns application state shared by Leptos signals
 
-**3. TEST BEFORE COMMIT**
-- After each component is finished: TEST
-- If test succeeds: commit and add
-- If test fails: fix before moving on
-- No broken code in main branch
+src/parser/
+  validates uploaded files and extracts text from TXT, Markdown, PDF, and DOCX
 
----
-
-## Build Phases
-
-### PHASE 1: Foundation (Sequential)
-```
-[1] Leptos project setup
-[2] GitHub repo (JDRV-space/nabu)
-[3] Vercel + CI/CD integration
+src/storage/
+  persists document records in IndexedDB and encrypts document content with AES-GCM
 ```
 
-### PHASE 2: Core (Parallel)
-```
-┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
-│  A: UI Theme    │  │  B: File Parse  │  │  C: Storage     │
-│  - Dark/light   │  │  - PDF/TXT/DOCX │  │  - IndexedDB    │
-│  - Colors       │  │  - MD parsing   │  │  - Encryption   │
-│  - Typography   │  │  - Validation   │  │  - Resume pos   │
-└─────────────────┘  └─────────────────┘  └─────────────────┘
-```
+PDF and DOCX parsing depends on browser JavaScript assets under
+`assets/document-parsers/`. Those assets are copied from pinned npm packages by
+`npm run prepare:assets`; they are not loaded from a third-party CDN at runtime.
 
-### PHASE 3: Reader (Sequential, depends on Phase 2)
-```
-[1] RSVP word display + amber ORP
-[2] WPM slider control
-[3] Progress bar + time remaining
-[4] Keyboard shortcuts
-[5] Touch gestures
-[6] Fullscreen mode
-[7] Word size adjustment
-```
+## Document Flow
 
-### PHASE 4: Features (Parallel, depends on Phase 3)
-```
-┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
-│  A: Library UI  │  │  B: Settings    │  │  C: Enhancements│
-│  - Grid/list    │  │  - Panel UI     │  │  - Chunk mode   │
-│  - Empty state  │  │  - Preferences  │  │  - Bionic read  │
-│  - Doc cards    │  │  - Save/load    │  │  - Speed ramp   │
-└─────────────────┘  └─────────────────┘  └─────────────────┘
-```
+1. The user selects or drops a document in the browser.
+2. The upload code checks file size and file signature where practical.
+3. Parser code extracts text and sanitizes HTML-derived content.
+4. The app tokenizes text into reader words.
+5. The document record is encrypted and stored in IndexedDB.
+6. The reader displays words using the configured WPM and words-per-flash
+   settings.
 
-### PHASE 5: Polish (Sequential)
-```
-[1] Text scramble animation
-[2] Stats dashboard
-[3] All animations (hover, transitions)
-```
+## Storage And Privacy Limits
 
-### PHASE 6: Security (Sequential, final)
-```
-[1] XSS sanitization (ammonia)
-[2] File validation (magic bytes)
-[3] CSP headers + SRI
-[4] cargo audit
-```
+Document content is encrypted before being written to IndexedDB. The AES-GCM key
+is stored in browser `localStorage` as `nabu_key`.
 
----
+This protects against accidental server-side document retention because Nabu has
+no backend document store. It does not protect against a compromised browser,
+same-origin script bug, browser extension, user profile, device compromise, or
+someone with access to the browser profile. Clearing site data can delete both
+the document library and the stored key.
 
-## Checklist
+## Security Controls
 
-### Setup
-- [x] Set up Leptos project with WASM target
+- Uploaded text that can contain markup is sanitized with `ammonia`.
+- PDF.js and JSZip are served as same-origin static assets copied from pinned
+  npm packages.
+- The deployment CSP is expected to allow same-origin scripts, generated WASM,
+  same-origin worker assets, Google Fonts styles/fonts, and local image/blob
+  data needed by the app.
+- There is no remote document upload path in the application code.
 
-### UI/UX
-- [x] Dark theme (dark bg #070910, amber accents #ffaa00, Space Grotesk font)
-- [ ] Dark/light theme toggle
-- [x] Progress bar + time remaining display
-- [x] Saved documents library UI
-- [x] Fullscreen mode toggle
-- [x] Word size adjustment (S / M / L / XL)
+The current build does not enforce subresource integrity for Trunk-generated
+WASM or JavaScript output. Do not describe SRI as complete unless the generated
+`dist/` output includes verified integrity attributes and matching CSP support.
 
-### Core Reader
-- [x] File upload component (TXT, MD parsing - PDF/DOCX coming soon)
-- [x] RSVP word display with amber ORP highlighting
-- [x] WPM slider control (100-1000 range)
-- [x] Punctuation pause logic (longer delay on . , ;)
-- [ ] Chunk mode (2-3 words display option)
-- [ ] Bionic reading toggle (bold first letters)
-- [ ] Text scramble animation on word transitions
+## Parser Dependencies
 
-### Controls
-- [x] Keyboard shortcuts (space=pause, arrows=speed, F=fullscreen, ESC=exit, R=restart)
-- [ ] Touch gestures (swipe speed, tap pause, long-press controls)
-- [ ] Speed ramping (gradual WPM increase)
+- `pdfjs-dist`: browser PDF parsing assets.
+- `jszip`: DOCX package reading in the browser.
+- `pulldown-cmark`: Markdown parsing.
+- `ammonia`: HTML sanitization.
 
-### Storage
-- [x] IndexedDB with encryption (aes-gcm crate)
-- [ ] Resume position per document
-- [ ] Reading stats dashboard
+## Known Limitations
 
-### Security
-- [x] XSS sanitization (ammonia crate)
-- [x] File validation (magic bytes, size limits)
-- [x] CSP headers + SRI for WASM
-- [x] cargo audit - only unmaintained warnings, no vulnerabilities
+- Browser-local encryption is not device security.
+- PDF and DOCX extraction can fail on malformed, scanned, encrypted, or unusual
+  files.
+- Large files are constrained by browser memory and IndexedDB behavior.
+- Reading progress and stats are limited to the current browser profile.
+- There is no account recovery or document backup.
 
-### DevOps
-- [x] GitHub repo (JDRV-space/nabu)
-- [x] Vercel project with GitHub integration
-- [x] CI/CD: push to main auto-deploys to Vercel
-- [x] **LIVE:** https://nabu-reader.vercel.app
+## Validation
 
----
+Useful lightweight checks:
 
-## Color System
-
-```
-PRIMARY PALETTE
---bg: #070910              Void black (backgrounds)
---bg-elevated: #0d1117     Cards, modals, panels
---amber: #ffaa00           ORP, accents, CTAs, progress
---amber-glow: rgba(255, 170, 0, 0.15)     Hover states, glows
---text: #f5f5f5            Primary text
---text-muted: rgba(245, 245, 245, 0.6)    Secondary text
---border: rgba(255, 255, 255, 0.08)       Glassmorphism borders
---success: #4ade80         Completed, streaks
-
-TYPOGRAPHY
-Font Family: 'Space Grotesk', system-ui, sans-serif
-Word Display: 6rem/96px (desktop), 3rem/48px (mobile), font-weight: 500
-Headings: 1.5rem/24px, font-weight: 600
-Body: 1rem/16px, font-weight: 400
+```bash
+cargo fmt --check
+cargo check --target wasm32-unknown-unknown
+npm run prepare:assets
+trunk build
 ```
 
----
-
-## UI Mockups
-
-### Reader View (Active - Immersive)
-```
-╔═══════════════════════════════════════════════════════════════════════════════╗
-║                                                                               ║
-║    Background: #070910 (void black)                                           ║
-║    Subtle noise texture at 2% opacity                                         ║
-║    Faint radial vignette at edges                                             ║
-║    Logo watermark top-left at 3% opacity                                      ║
-║                                                                               ║
-║  ┌─────────────────────────────────────────────────────────────────────────┐  ║
-║  │                                                                         │  ║
-║  │   (Nabu logo 3% opacity)                                                │  ║
-║  │                                                                         │  ║
-║  │                                                                         │  ║
-║  │                                                                         │  ║
-║  │                                                                         │  ║
-║  │                              .                                          │  ║
-║  │                        conte|mplate                                     │  ║
-║  │                              .                                          │  ║
-║  │                              _                                          │  ║
-║  │                        (amber underglow)                                │  ║
-║  │                                                                         │  ║
-║  │                                                                         │  ║
-║  │                                                                         │  ║
-║  │                                                                         │  ║
-║  │                                                                         │  ║
-║  │    NO CONTROLS VISIBLE - pure immersion                                 │  ║
-║  │                                                                         │  ║
-║  └─────────────────────────────────────────────────────────────────────────┘  ║
-║                                                                               ║
-║    Typography: Space Grotesk, 6rem (desktop) / 3rem (mobile)                  ║
-║    ORP character: amber (#ffaa00) vertical line + underglow                   ║
-║    Other characters: off-white (#f5f5f5)                                      ║
-║                                                                               ║
-╚═══════════════════════════════════════════════════════════════════════════════╝
-```
-
-### Reader View (Paused - Controls Visible)
-```
-╔═══════════════════════════════════════════════════════════════════════════════╗
-║                                                                               ║
-║    Controls fade in with glassmorphism panels                                 ║
-║    background: rgba(13, 17, 23, 0.85)                                         ║
-║    backdrop-filter: blur(16px)                                                ║
-║    border: 1px solid rgba(255, 255, 255, 0.08)                                ║
-║                                                                               ║
-║  ┌─────────────────────────────────────────────────────────────────────────┐  ║
-║  │                                                                         │  ║
-║  │  ┌────────────────────────────────────────────────────────────────────┐ │  ║
-║  │  │  Menu   Library                        Settings   [  ] Fullscreen  │ │  ║
-║  │  └────────────────────────────────────────────────────────────────────┘ │  ║
-║  │                                                                         │  ║
-║  │                                                                         │  ║
-║  │                              .                                          │  ║
-║  │                        conte|mplate                                     │  ║
-║  │                              .                                          │  ║
-║  │                              _                                          │  ║
-║  │                                                                         │  ║
-║  │                                                                         │  ║
-║  │  ┌────────────────────────────────────────────────────────────────────┐ │  ║
-║  │  │                                                                    │ │  ║
-║  │  │        <<           ┌─────┐           >>        ┌──────────┐       │ │  ║
-║  │  │       -50          │ PLAY │          +50       │  420 WPM │       │ │  ║
-║  │  │                     └─────┘                     └──────────┘       │ │  ║
-║  │  │                                                                    │ │  ║
-║  │  │   ######################__________________   47%                   │ │  ║
-║  │  │   Word 1,842 of 3,921              8:34 remaining                  │ │  ║
-║  │  │                                                                    │ │  ║
-║  │  │   Font: [S] [M] [L] [XL]                                           │ │  ║
-║  │  │                                                                    │ │  ║
-║  │  └────────────────────────────────────────────────────────────────────┘ │  ║
-║  │                                                                         │  ║
-║  │  ┌────────────────────────────────────────────────────────────────────┐ │  ║
-║  │  │  SPACE pause   <-/-> +/-50 WPM   R restart   F fullscreen   ESC    │ │  ║
-║  │  └────────────────────────────────────────────────────────────────────┘ │  ║
-║  │                                                                         │  ║
-║  └─────────────────────────────────────────────────────────────────────────┘  ║
-║                                                                               ║
-║    Progress bar: clickable to seek, expands on hover                          ║
-║    Keyboard hints: fade out after 3 seconds                                   ║
-║    Font size buttons: S=3rem, M=4.5rem, L=6rem, XL=8rem                       ║
-║                                                                               ║
-╚═══════════════════════════════════════════════════════════════════════════════╝
-```
-
-### Word Transition Animation (Text Scramble)
-```
-╔═══════════════════════════════════════════════════════════════════════════════╗
-║                                                                               ║
-║    TEXT SCRAMBLE EFFECT (signature animation)                                 ║
-║    Duration: 60ms total | ORP character stays stable                          ║
-║                                                                               ║
-║  ┌─────────────────────────────────────────────────────────────────────────┐  ║
-║  │                                                                         │  ║
-║  │    Frame 0 (0ms):      conte|mplate         <- current word             │  ║
-║  │                              _                                          │  ║
-║  │                                                                         │  ║
-║  │    Frame 1 (15ms):     c0nt3|mpl@t3         <- scramble starts          │  ║
-║  │                              _                                          │  ║
-║  │                                                                         │  ║
-║  │    Frame 2 (30ms):     kn#w|l*dg&           <- mixing in new word       │  ║
-║  │                             _                                           │  ║
-║  │                                                                         │  ║
-║  │    Frame 3 (45ms):     know|l+dge           <- resolving                │  ║
-║  │                             _                                           │  ║
-║  │                                                                         │  ║
-║  │    Frame 4 (60ms):     know|ledge           <- new word complete        │  ║
-║  │                             _                                           │  ║
-║  │                                                                         │  ║
-║  └─────────────────────────────────────────────────────────────────────────┘  ║
-║                                                                               ║
-║    Characters that scramble: !"#$%&'()*+,-./0123456789:;<=>?@                 ║
-║    ORP position recalculates for each word (25-35% into word)                 ║
-║    Easing: linear (must feel instant at high WPM)                             ║
-║                                                                               ║
-╚═══════════════════════════════════════════════════════════════════════════════╝
-```
-
-### Document Library
-```
-╔═══════════════════════════════════════════════════════════════════════════════╗
-║                                                                               ║
-║  ┌─────────────────────────────────────────────────────────────────────────┐  ║
-║  │                                                                         │  ║
-║  │  ┌──────────────────────────────────────────────────────────────────┐   │  ║
-║  │  │  LIBRARY                          [Search...]   [Grid] [List] +  │   │  ║
-║  │  └──────────────────────────────────────────────────────────────────┘   │  ║
-║  │                                                                         │  ║
-║  │  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐      │  ║
-║  │  │##################│  │##################│  │#########_________│      │  ║
-║  │  │                  │  │                  │  │                  │      │  ║
-║  │  │                  │  │       Done       │  │                  │      │  ║
-║  │  │  Deep Work       │  │  Atomic          │  │  The Art of      │      │  ║
-║  │  │  Cal Newport     │  │  Habits          │  │  War             │      │  ║
-║  │  │                  │  │  James Clear     │  │  Sun Tzu         │      │  ║
-║  │  │                  │  │                  │  │                  │      │  ║
-║  │  │  34%    PDF      │  │  100%   TXT      │  │  52%    PDF      │      │  ║
-║  │  │  2 days ago      │  │  Completed       │  │  yesterday       │      │  ║
-║  │  └──────────────────┘  └──────────────────┘  └──────────────────┘      │  ║
-║  │        |                                            |                   │  ║
-║  │   amber border                                 amber border             │  ║
-║  │   (in progress)                                (in progress)            │  ║
-║  │                                                                         │  ║
-║  │  Card styling:                                                          │  ║
-║  │  - background: rgba(255, 255, 255, 0.03)                                │  ║
-║  │  - border: 1px solid rgba(255, 255, 255, 0.06)                          │  ║
-║  │  - border-radius: 12px                                                  │  ║
-║  │  - In-progress: amber left border (3px solid #ffaa00)                   │  ║
-║  │  - Completed: muted styling, checkmark                                  │  ║
-║  │  - Hover: translateY(-4px), amber glow                                  │  ║
-║  │                                                                         │  ║
-║  └─────────────────────────────────────────────────────────────────────────┘  ║
-║                                                                               ║
-╚═══════════════════════════════════════════════════════════════════════════════╝
-```
-
-### Library Empty State
-```
-╔═══════════════════════════════════════════════════════════════════════════════╗
-║                                                                               ║
-║  ┌─────────────────────────────────────────────────────────────────────────┐  ║
-║  │                                                                         │  ║
-║  │  ┌──────────────────────────────────────────────────────────────────┐   │  ║
-║  │  │  LIBRARY                                            + Add        │   │  ║
-║  │  └──────────────────────────────────────────────────────────────────┘   │  ║
-║  │                                                                         │  ║
-║  │                                                                         │  ║
-║  │                                                                         │  ║
-║  │                              +-------+                                  │  ║
-║  │                              |       |                                  │  ║
-║  │                              |  //\  |  <- cuneiform symbol             │  ║
-║  │                              |       |    pulsing amber glow            │  ║
-║  │                              +-------+    (3s cycle)                    │  ║
-║  │                                                                         │  ║
-║  │                         No documents yet                                │  ║
-║  │                                                                         │  ║
-║  │                   ┌─────────────────────────────┐                       │  ║
-║  │                   │                             │                       │  ║
-║  │                   │   + Upload your first       │                       │  ║
-║  │                   │        document             │                       │  ║
-║  │                   │                             │                       │  ║
-║  │                   └─────────────────────────────┘                       │  ║
-║  │                                                                         │  ║
-║  │                      PDF  .  TXT  .  DOCX                               │  ║
-║  │                                                                         │  ║
-║  │                                                                         │  ║
-║  │  + - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - +   │  ║
-║  │  |                                                                 |   │  ║
-║  │  |               or drag and drop anywhere                         |   │  ║
-║  │  |                                                                 |   │  ║
-║  │  + - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - +   │  ║
-║  │                   ^                                                     │  ║
-║  │             dashed border                                               │  ║
-║  │         animates on drag-over                                           │  ║
-║  │                                                                         │  ║
-║  └─────────────────────────────────────────────────────────────────────────┘  ║
-║                                                                               ║
-║    Drag-over state:                                                           ║
-║    - Dashed border -> solid amber                                             ║
-║    - Background gets amber-glow overlay                                       ║
-║    - Scale up slightly (1.01)                                                 ║
-║                                                                               ║
-╚═══════════════════════════════════════════════════════════════════════════════╝
-```
-
-### Stats Dashboard
-```
-╔═══════════════════════════════════════════════════════════════════════════════╗
-║                                                                               ║
-║  ┌─────────────────────────────────────────────────────────────────────────┐  ║
-║  │                                                                         │  ║
-║  │  ┌──────────────────────────────────────────────────────────────────┐   │  ║
-║  │  │  STATISTICS                                    This Week v       │   │  ║
-║  │  └──────────────────────────────────────────────────────────────────┘   │  ║
-║  │                                                                         │  ║
-║  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐│  ║
-║  │  │              │  │              │  │              │  │              ││  ║
-║  │  │   127,432    │  │     6.2      │  │     423      │  │      12      ││  ║
-║  │  │   words      │  │    hours     │  │   avg WPM    │  │    streak    ││  ║
-║  │  │   ^ 18%      │  │   ^ 12%      │  │   ^ 8%       │  │     days     ││  ║
-║  │  │              │  │              │  │              │  │              ││  ║
-║  │  └──────────────┘  └──────────────┘  └──────────────┘  └──────────────┘│  ║
-║  │         |                                                      |       │  ║
-║  │    amber glow                                             gold border  │  ║
-║  │    (positive)                                             (streak>=7)  │  ║
-║  │                                                                         │  ║
-║  │  ================================================================       │  ║
-║  │                          (cuneiform divider)                            │  ║
-║  │                                                                         │  ║
-║  │  READING ACTIVITY                                                       │  ║
-║  │  ┌──────────────────────────────────────────────────────────────────┐   │  ║
-║  │  │                                                                  │   │  ║
-║  │  │   3h |                    ##                                     │   │  ║
-║  │  │      |              ##    ##                                     │   │  ║
-║  │  │   2h |        ##    ##    ##          ##                         │   │  ║
-║  │  │      |  ##    ##    ##    ##    ##    ##                         │   │  ║
-║  │  │   1h |  ##    ##    ##    ##    ##    ##    ##                   │   │  ║
-║  │  │      |  ##    ##    ##    ##    ##    ##    ##                   │   │  ║
-║  │  │    0 +--##----##----##----##----##----##----##--                 │   │  ║
-║  │  │       Mon   Tue   Wed   Thu   Fri   Sat   Sun                    │   │  ║
-║  │  │                                                                  │   │  ║
-║  │  └──────────────────────────────────────────────────────────────────┘   │  ║
-║  │                                                                         │  ║
-║  │  SPEED PROGRESSION                                                      │  ║
-║  │  ┌──────────────────────────────────────────────────────────────────┐   │  ║
-║  │  │                                                                  │   │  ║
-║  │  │  550 |                                        o======            │   │  ║
-║  │  │      |                              o---------                   │   │  ║
-║  │  │  450 |                    o---------                             │   │  ║
-║  │  │      |          o---------                                       │   │  ║
-║  │  │  350 |o---------                                                 │   │  ║
-║  │  │      +---------+---------+---------+---------+---------          │   │  ║
-║  │  │        Week 1    Week 2    Week 3    Week 4    Week 5            │   │  ║
-║  │  │                                                                  │   │  ║
-║  │  └──────────────────────────────────────────────────────────────────┘   │  ║
-║  │                                                                         │  ║
-║  │    Charts: animate on scroll into view                                  │  ║
-║  │    Bars grow up (600ms ease-out)                                        │  ║
-║  │    Line draws left-to-right (800ms ease-out)                            │  ║
-║  │    Area fill below line at 15% amber opacity                            │  ║
-║  │                                                                         │  ║
-║  └─────────────────────────────────────────────────────────────────────────┘  ║
-║                                                                               ║
-╚═══════════════════════════════════════════════════════════════════════════════╝
-```
-
-### Settings Panel
-```
-╔═══════════════════════════════════════════════════════════════════════════════╗
-║                                                                               ║
-║  ┌─────────────────────────────────────────────────────────────────────────┐  ║
-║  │                                                                         │  ║
-║  │  SETTINGS                                                          X    │  ║
-║  │                                                                         │  ║
-║  │  -----------------------------------------------------------------      │  ║
-║  │  READING                                                                │  ║
-║  │  -----------------------------------------------------------------      │  ║
-║  │                                                                         │  ║
-║  │  Default Speed                                                          │  ║
-║  │  100 ---------------------o=============== 1000                         │  ║
-║  │                          420 WPM                                        │  ║
-║  │                                                                         │  ║
-║  │  Chunk Size                                                             │  ║
-║  │  (o) 1 word    ( ) 2 words    ( ) 3 words                               │  ║
-║  │                                                                         │  ║
-║  │  Bionic Reading                                                         │  ║
-║  │  ( ) Off    (o) On                                                      │  ║
-║  │                                                                         │  ║
-║  │     Preview: "THis is HOw biONic REAding looks"                         │  ║
-║  │              (bold = darker/bolder letters)                             │  ║
-║  │                                                                         │  ║
-║  │  Punctuation Pause                                                      │  ║
-║  │  (o) On    ( ) Off            Multiplier: [1.5x v]                      │  ║
-║  │                                                                         │  ║
-║  │  Speed Ramping                                                          │  ║
-║  │  ( ) Off    (o) On            +10 WPM every [60s v]                     │  ║
-║  │                                                                         │  ║
-║  │  -----------------------------------------------------------------      │  ║
-║  │  DISPLAY                                                                │  ║
-║  │  -----------------------------------------------------------------      │  ║
-║  │                                                                         │  ║
-║  │  Theme                                                                  │  ║
-║  │  (o) Dark    ( ) Light    ( ) System                                    │  ║
-║  │                                                                         │  ║
-║  │  Font Size                                                              │  ║
-║  │  ( ) S    (o) M    ( ) L    ( ) XL                                      │  ║
-║  │                                                                         │  ║
-║  │  ORP Style                                                              │  ║
-║  │  (o) Underline    ( ) Background    ( ) None                            │  ║
-║  │                                                                         │  ║
-║  │                                                                         │  ║
-║  │             ┌────────────────────────┐                                  │  ║
-║  │             │     Save Settings      │  <- amber border                 │  ║
-║  │             │                        │     fills on hover               │  ║
-║  │             └────────────────────────┘                                  │  ║
-║  │                                                                         │  ║
-║  └─────────────────────────────────────────────────────────────────────────┘  ║
-║                                                                               ║
-║    Modal: centered, max-width 500px                                           ║
-║    Opens with scale(0.95) -> scale(1) + fade                                  ║
-║    Backdrop: rgba(0, 0, 0, 0.8) with click-to-close                           ║
-║    Radio buttons: custom amber circles                                        ║
-║    (o) = filled amber    ( ) = empty with border                              ║
-║                                                                               ║
-╚═══════════════════════════════════════════════════════════════════════════════╝
-```
-
-### Mobile Views
-```
-╔═══════════════════════════════════════════════════════════════════════════════╗
-║                                                                               ║
-║   READER (ACTIVE)              READER (PAUSED)             LIBRARY            ║
-║  ┌─────────────────┐          ┌─────────────────┐        ┌─────────────────┐  ║
-║  │                 │          │                 │        │ LIBRARY    + =  │  ║
-║  │                 │          │  =         @ [] │        ├─────────────────┤  ║
-║  │                 │          │                 │        │                 │  ║
-║  │                 │          │                 │        │ ┌─────────────┐ │  ║
-║  │                 │          │                 │        │ │####________│ │  ║
-║  │       .         │          │       .         │        │ │ Deep Work  │ │  ║
-║  │  kno|wledge     │          │  kno|wledge     │        │ │ 34% . PDF  │ │  ║
-║  │       .         │          │       .         │        │ └─────────────┘ │  ║
-║  │                 │          │                 │        │                 │  ║
-║  │                 │          │    ┌───────┐    │        │ ┌─────────────┐ │  ║
-║  │                 │          │    │ PLAY  │    │        │ │############│ │  ║
-║  │                 │          │    └───────┘    │        │ │ Atomic     │ │  ║
-║  │                 │          │                 │        │ │ 100% . TXT │ │  ║
-║  │                 │          │    420 WPM      │        │ └─────────────┘ │  ║
-║  │                 │          │                 │        │                 │  ║
-║  │                 │          │ <<    47%    >> │        │ ┌─────────────┐ │  ║
-║  │                 │          │                 │        │ │____________│ │  ║
-║  │ ###### 47%      │          │ ######_________ │        │ │ Meditation │ │  ║
-║  │                 │          │  5:23 remaining │        │ │ 0% . DOCX  │ │  ║
-║  └─────────────────┘          └─────────────────┘        │ └─────────────┘ │  ║
-║                                                          │                 │  ║
-║                                                          ├─────────────────┤  ║
-║   GESTURES:                                              │ Lib  Read Stats │  ║
-║   . Tap center = pause/play                              └─────────────────┘  ║
-║   . Swipe <-/-> = +/-50 WPM                                                   ║
-║   . Swipe ^/v = +/-10 WPM                                                     ║
-║   . Long press = show controls                                                ║
-║   . Double tap = restart                                                      ║
-║                                                                               ║
-╚═══════════════════════════════════════════════════════════════════════════════╝
-```
-
----
-
-## Animations Summary
-
-| Element | Animation | Duration | Easing |
-|---------|-----------|----------|--------|
-| Word transition | Text scramble | 50-80ms | linear |
-| Controls fade in | Opacity 0 -> 1 | 200ms | ease-out |
-| Card hover | translateY(-4px) | 150ms | ease-out |
-| Progress fill | Width transition | 100ms | linear |
-| Modal open | Scale 0.95 -> 1, fade | 200ms | ease-out |
-| Button press | Scale 0.95 | 100ms | ease-in-out |
-| Loading shimmer | Gradient sweep | 1500ms | linear (infinite) |
-| Glow pulse | Box-shadow intensity | 3000ms | ease-in-out (infinite) |
-| Stat bars | Height 0 -> value | 600ms | ease-out |
-
----
-
-## Security Notes
-
-### CSP Header
-```
-Content-Security-Policy:
-  default-src 'self';
-  script-src 'self' 'wasm-unsafe-eval';
-  style-src 'self' 'unsafe-inline';
-  img-src 'self' blob: data:;
-  connect-src 'self';
-  object-src 'none';
-  base-uri 'self';
-```
-
-### Client-Side Storage Limits
-
-Documents are kept in IndexedDB and encrypted before storage. The key is stored in browser `localStorage` as `nabu_key`, so this protects against server upload because there is no backend document store. It does not protect against a compromised browser, extension, device, or browser profile.
-
-### Key Crates
-- `ammonia` - HTML sanitization (XSS prevention)
-- `aes-gcm` - Client-side encryption for IndexedDB
-- `indexed_db_futures` - IndexedDB access from WASM
-- `gloo` - Web APIs for Rust/WASM
-- `pdf-extract` or JS interop with PDF.js - PDF parsing
-- `docx-rs` - DOCX parsing
-
----
-
-## References
-- [Leptos Docs](https://leptos.dev/)
-- [OWASP Client-Side Security](https://owasp.org/www-project-top-10-client-side-security-risks/)
-- [Nabu - World History Encyclopedia](https://www.worldhistory.org/Nabu/)
+For docs-only changes, `git diff --check` is usually sufficient. Browser
+behavior still needs manual validation with representative TXT, Markdown, PDF,
+and DOCX files.

@@ -22,6 +22,11 @@ echo "=== Cargo version: $(cargo --version) ==="
 echo "=== Adding wasm32-unknown-unknown target ==="
 rustup target add wasm32-unknown-unknown
 
+# Install and copy browser parser assets
+echo "=== Installing browser parser assets ==="
+npm ci
+npm run prepare:assets
+
 # Install trunk via cargo (compatible with Vercel's glibc)
 echo "=== Installing trunk ==="
 cargo install trunk --locked

@@ -2,6 +2,8 @@
 /target/
 /dist/
 pkg/
+node_modules/
+.npm-cache/
 
 # IDE
 .idea/

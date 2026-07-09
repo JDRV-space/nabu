@@ -20,6 +20,7 @@ Prerequisites:
 - Rust stable
 - `wasm32-unknown-unknown` target
 - Trunk
+- Node.js and npm
 
 ```bash
 git clone https://github.com/JDRV-space/nabu.git
@@ -27,6 +28,8 @@ cd nabu
 
 rustup target add wasm32-unknown-unknown
 cargo install trunk
+npm ci
+npm run prepare:assets
 
 trunk serve
 ```
@@ -56,7 +59,8 @@ Build output goes to `dist/`.
 
 - Documents are stored in browser IndexedDB and encrypted with AES-GCM.
 - The encryption key is stored in browser `localStorage` as `nabu_key`.
-- This is privacy against server upload. It is not protection against a compromised browser, browser extension, device, or user profile.
+- This is privacy against server upload. It is not protection against a compromised browser, same-origin script bug, browser extension, device, or user profile.
+- PDF.js and JSZip are copied from pinned npm packages and served from the same origin. They are not loaded from cdnjs at runtime.
 - Clearing site data can delete the library and the stored key.
 - PDF and DOCX parsing happens in the browser and can fail on malformed or unusual files.
 - There is no account system, sync, sharing, or backup.
@@ -65,16 +69,19 @@ Build output goes to `dist/`.
 
 ```text
 nabu/
-├── assets/                 # static assets and CSS
+├── assets/                 # static assets, CSS, and vendored parser files
 ├── src/
 │   ├── main.rs             # entry point
 │   ├── components/         # reader, library, settings, controls, upload
 │   ├── state/              # application state and signals
 │   ├── storage/            # IndexedDB and document encryption
 │   └── parser/             # PDF, DOCX, TXT, MD parsing
-├── docs/SPEC.md            # design and implementation notes
+├── docs/SPEC.md            # technical specification and known limits
 ├── scripts/                # build scripts
 ├── Cargo.toml
+├── .npmrc
+├── package.json
+├── package-lock.json
 ├── Trunk.toml
 ├── vercel.json
 └── LICENSE
@@ -86,4 +93,6 @@ nabu/
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+Apache License 2.0. See [LICENSE](LICENSE).
+
+Attribution notices are listed in [NOTICE](NOTICE).

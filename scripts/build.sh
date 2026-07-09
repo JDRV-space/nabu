@@ -10,6 +10,10 @@ fi
 # Add wasm target
 rustup target add wasm32-unknown-unknown
 
+# Install and copy browser parser assets
+npm ci
+npm run prepare:assets
+
 # Install trunk if not present
 if ! command -v trunk &> /dev/null; then
     cargo install trunk
