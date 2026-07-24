@@ -1,0 +1,20 @@
+{
+  "name": "nabu",
+  "version": "0.1.0",
+  "description": "Browser-based RSVP speed reader built with Rust and WebAssembly",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JDRV-space/nabu.git"
+  },
+  "type": "module",
+  "scripts": {
+    "prepare:assets": "npm run vendor:document-parsers",
+    "test": "node --test tests/document-parser-limits.test.mjs",
+    "vendor:document-parsers": "node scripts/vendor-document-parsers.mjs"
+  },
+  "dependencies": {
+    "jszip": "3.10.1",
+    "pdfjs-dist": "4.10.38"
+  }
+}
