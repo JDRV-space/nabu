@@ -7,7 +7,7 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::spawn_local;
 use web_sys::window;
 
-// Store interval ID outside reactive system - THIS IS THE FIX
+// The browser timer outlives individual reactive callbacks and is cleared on unmount.
 thread_local! {
     static INTERVAL_ID: std::cell::Cell<Option<i32>> = const { std::cell::Cell::new(None) };
 }
@@ -62,7 +62,6 @@ pub fn Reader() -> impl IntoView {
                     .map(|s| s.to_string())
                     .collect();
                 state.current_words.set(doc_words);
-                state.current_document.set(Some(doc));
             }
             set_loading.set(false);
         });
@@ -177,7 +176,7 @@ pub fn Reader() -> impl IntoView {
             if let Some(doc) = win.document() {
                 if is_fullscreen.get_untracked() {
                     if doc.fullscreen_element().is_some() {
-                        let _ = doc.exit_fullscreen();
+                        doc.exit_fullscreen();
                     }
                     set_fullscreen.set(false);
                 } else {

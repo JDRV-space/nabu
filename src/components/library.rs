@@ -96,18 +96,7 @@ fn DocumentCard(doc: Document) -> impl IntoView {
     let doc_id_nav = doc.id.clone();
     let doc_id_delete = doc.id.clone();
     let doc_clone = doc.clone();
-    let progress = doc.progress;
-    let is_complete = progress >= 100.0;
-    let is_in_progress = progress > 0.0 && progress < 100.0;
     let (show_confirm, set_show_confirm) = signal(false);
-
-    let card_class = if is_in_progress {
-        "document-card in-progress"
-    } else if is_complete {
-        "document-card completed"
-    } else {
-        "document-card"
-    };
 
     let on_click = move |ev: web_sys::MouseEvent| {
         ev.prevent_default();
@@ -118,7 +107,6 @@ fn DocumentCard(doc: Document) -> impl IntoView {
             .map(|s| s.to_string())
             .collect();
         state.current_words.set(words);
-        state.current_document.set(Some(doc_clone.clone()));
         // Navigate client-side after state is set
         let path = format!("/read/{}", doc_id_nav);
         navigate(&path, Default::default());
@@ -130,31 +118,19 @@ fn DocumentCard(doc: Document) -> impl IntoView {
         set_show_confirm.set(true);
     };
 
-    let last_read_display = doc
-        .last_read
-        .clone()
-        .unwrap_or_else(|| "Never read".to_string());
     let word_count_display = format!("{} words", doc.word_count);
     let delete_label = format!("Delete {}", doc.title);
 
     view! {
         <div class="document-card-wrapper">
-            <a href=format!("/read/{}", doc_id) class=card_class on:click=on_click>
-                <div class="card-progress-bar">
-                    <div class="card-progress-fill" style=format!("width: {}%", progress)></div>
-                </div>
+            <a href=format!("/read/{}", doc_id) class="document-card" on:click=on_click>
                 <div class="card-content">
-                    <Show when=move || is_complete>
-                        <span class="card-badge">"Done"</span>
-                    </Show>
                     <h3 class="card-title">{doc.title.clone()}</h3>
                     <p class="card-meta">{word_count_display}</p>
                 </div>
                 <div class="card-footer">
-                    <span class="card-progress">{format!("{}%", progress as u32)}</span>
                     <span class="card-type">{doc.file_type.clone()}</span>
                 </div>
-                <div class="card-date">{last_read_display}</div>
             </a>
             <button class="btn-delete" on:click=on_delete_click aria-label=delete_label>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

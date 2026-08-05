@@ -1,16 +1,9 @@
-mod controls;
 mod library;
 mod reader;
-mod settings;
-mod stats;
 mod upload;
 
-pub use controls::Controls;
 pub use library::Library;
 pub use reader::Reader;
-pub use settings::Settings;
-pub use stats::Stats;
-pub use upload::Upload;
 
 use leptos::prelude::*;
 use leptos_router::components::*;
@@ -29,7 +22,6 @@ pub fn App() -> impl IntoView {
                 <Routes fallback=|| view! { <p>"Page not found"</p> }>
                     <Route path=path!("/") view=Library />
                     <Route path=path!("/read/:id") view=Reader />
-                    <Route path=path!("/stats") view=Stats />
                 </Routes>
             </main>
         </Router>

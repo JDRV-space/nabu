@@ -28,7 +28,7 @@ pub enum ParseError {
     #[error("Failed to read file: {0}")]
     ReadError(String),
     #[error("Failed to parse file: {0}")]
-    ParseError(String),
+    ParseFailure(String),
     #[error("Invalid file format")]
     InvalidFormat,
 }
@@ -83,15 +83,9 @@ async fn validate_magic_bytes(file: &File, file_type: &str) -> Result<(), ParseE
     let bytes = Uint8Array::new(&array_buffer).to_vec();
 
     match file_type {
-        "PDF" => {
-            if bytes.len() >= 4 && &bytes[0..4] != b"%PDF" {
-                return Err(ParseError::InvalidFormat);
-            }
-        }
-        "DOCX" => {
-            if bytes.len() >= 4 && &bytes[0..4] != &[0x50, 0x4B, 0x03, 0x04] {
-                return Err(ParseError::InvalidFormat);
-            }
+        "PDF" if !bytes.starts_with(b"%PDF") => return Err(ParseError::InvalidFormat),
+        "DOCX" if !bytes.starts_with(&[0x50, 0x4B, 0x03, 0x04]) => {
+            return Err(ParseError::InvalidFormat);
         }
         _ => {}
     }
@@ -189,12 +183,12 @@ async fn parse_pdf(file: File) -> Result<String, ParseError> {
         .await
         .map_err(|e| {
             let msg = e.as_string().unwrap_or_else(|| "PDF parsing failed".into());
-            ParseError::ParseError(msg)
+            ParseError::ParseFailure(msg)
         })?;
 
     result
         .as_string()
-        .ok_or_else(|| ParseError::ParseError("PDF extraction returned non-string".into()))
+        .ok_or_else(|| ParseError::ParseFailure("PDF extraction returned non-string".into()))
 }
 
 async fn parse_docx(file: File) -> Result<String, ParseError> {
@@ -208,12 +202,12 @@ async fn parse_docx(file: File) -> Result<String, ParseError> {
             let msg = e
                 .as_string()
                 .unwrap_or_else(|| "DOCX parsing failed".into());
-            ParseError::ParseError(msg)
+            ParseError::ParseFailure(msg)
         })?;
 
     result
         .as_string()
-        .ok_or_else(|| ParseError::ParseError("DOCX extraction returned non-string".into()))
+        .ok_or_else(|| ParseError::ParseFailure("DOCX extraction returned non-string".into()))
 }
 
 fn sanitize_content(content: &str) -> String {

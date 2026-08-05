@@ -67,6 +67,8 @@ build, but it does not establish a browser support matrix.
 - Google Fonts receives ordinary page-load request metadata; document content
   is not sent to Google Fonts.
 - There is no account system, sync, sharing, or backup.
+- Nabu does not save reading progress or the last reading position, and it does
+  not provide reading statistics or a separate settings page.
 
 Exact parser limits and security controls are maintained in the
 [technical specification](docs/SPEC.md).

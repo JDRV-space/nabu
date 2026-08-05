@@ -20,6 +20,11 @@ pub fn Upload() -> impl IntoView {
 pub fn UploadModal(on_close: impl Fn() + Clone + Send + Sync + 'static) -> impl IntoView {
     let on_backdrop_click = on_close.clone();
     let on_escape = on_close.clone();
+    let close_button = NodeRef::<leptos::html::Button>::new();
+
+    close_button.on_load(|button| {
+        let _ = button.focus();
+    });
 
     view! {
         <div
@@ -43,7 +48,7 @@ pub fn UploadModal(on_close: impl Fn() + Clone + Send + Sync + 'static) -> impl 
                     <button
                         class="btn-close"
                         aria-label="Close upload dialog"
-                        autofocus=true
+                        node_ref=close_button
                         on:click=move |_| on_close()
                     >"X"</button>
                 </div>
@@ -68,7 +73,6 @@ fn UploadZone() -> impl IntoView {
 
         for i in 0..files.length() {
             if let Some(file) = files.get(i) {
-                let state = state.clone();
                 spawn_local(async move {
                     match parse_file(file).await {
                         Ok(doc) => {

@@ -1,5 +1,3 @@
-use leptos::prelude::*;
-
 mod components;
 mod parser;
 mod state;
