@@ -22,10 +22,10 @@ src/main.rs
   mounts the Leptos app
 
 src/components/mod.rs
-  routes between the library, reader, and stats views
+  routes between the library and reader views
 
 src/components/
-  renders upload, library, reader controls, reader view, and stats UI
+  renders upload, library, reader controls, and reader view
 
 src/state/
   owns application state shared by Leptos signals
@@ -48,8 +48,8 @@ PDF and DOCX parsing depends on browser JavaScript assets under
 3. Parser code extracts text and sanitizes HTML-derived content.
 4. The app tokenizes text into reader words.
 5. The document record is encrypted and stored in IndexedDB.
-6. The reader displays words using the configured WPM and words-per-flash
-   settings.
+6. The reader displays words using the session's WPM and words-per-flash
+   controls.
 
 ## Storage And Privacy Limits
 
@@ -78,12 +78,15 @@ the document library and the stored key.
 - The deployment CSP is expected to allow same-origin scripts, generated WASM,
   same-origin worker assets, Google Fonts styles/fonts, and local image/blob
   data needed by the app.
+- The deployment permissions policy denies camera, microphone, geolocation,
+  payment, and USB access while retaining same-origin fullscreen support.
 - There is no remote document upload path in the application code.
 
 Trunk 0.21.14 generates integrity attributes for its generated JavaScript, CSS,
 and WebAssembly resources by default. Parser scripts are same-origin assets and
-do not currently use integrity attributes. Deployment security claims remain
-unverified until the published artifact and response headers have been checked.
+do not currently use integrity attributes. Production verification must check
+the published artifact and response headers; repository configuration alone is
+not proof of deployed behavior.
 
 ## Parser Dependencies
 
@@ -98,10 +101,10 @@ unverified until the published artifact and response headers have been checked.
 - PDF and DOCX extraction can fail on malformed, scanned, encrypted, or unusual
   files.
 - Large files are constrained by browser memory and IndexedDB behavior.
-- The reader calculates session progress for display but does not write the
-  document's progress or last-read fields back to IndexedDB.
-- The stats view uses default in-memory values; reading sessions do not update
-  or persist those statistics.
+- Reader progress is session-only. Nabu does not save the last position or
+  provide reading-history statistics.
+- WPM, word-group size, and font size are session controls. Nabu does not
+  provide a separate settings page or persist those preferences.
 - There is no account recovery or document backup.
 
 ## Validation

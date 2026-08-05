@@ -3,7 +3,6 @@ use aes_gcm::{Aes256Gcm, Key, Nonce};
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
 use indexed_db_futures::prelude::*;
 use indexed_db_futures::web_sys::DomException;
-use serde::{de::DeserializeOwned, Serialize};
 use thiserror::Error;
 use wasm_bindgen::JsValue;
 
@@ -12,27 +11,26 @@ use crate::state::Document;
 const DB_NAME: &str = "nabu_db";
 const DB_VERSION: u32 = 1;
 const DOCUMENTS_STORE: &str = "documents";
-const SETTINGS_STORE: &str = "settings";
 
 #[derive(Error, Debug)]
 pub enum StorageError {
     #[error("IndexedDB error: {0}")]
-    IdbError(String),
+    IndexedDb(String),
     #[error("Serialization error: {0}")]
-    SerializationError(String),
+    Serialization(String),
     #[error("Encryption error: {0}")]
-    EncryptionError(String),
+    Encryption(String),
 }
 
 impl From<JsValue> for StorageError {
     fn from(value: JsValue) -> Self {
-        StorageError::IdbError(format!("{:?}", value))
+        StorageError::IndexedDb(format!("{:?}", value))
     }
 }
 
 impl From<DomException> for StorageError {
     fn from(value: DomException) -> Self {
-        StorageError::IdbError(format!("{:?}", value))
+        StorageError::IndexedDb(format!("{:?}", value))
     }
 }
 
@@ -67,7 +65,7 @@ impl Storage {
                 }
 
                 let key = Self::generate_key();
-                let key_b64 = BASE64.encode(&key);
+                let key_b64 = BASE64.encode(key);
                 let _ = storage.set_item("nabu_key", &key_b64);
                 return key;
             }
@@ -82,12 +80,12 @@ impl Storage {
 
         let mut nonce_bytes = [0u8; 12];
         getrandom::getrandom(&mut nonce_bytes)
-            .map_err(|e| StorageError::EncryptionError(e.to_string()))?;
+            .map_err(|e| StorageError::Encryption(e.to_string()))?;
         let nonce = Nonce::from_slice(&nonce_bytes);
 
         let ciphertext = cipher
             .encrypt(nonce, data)
-            .map_err(|e| StorageError::EncryptionError(e.to_string()))?;
+            .map_err(|e| StorageError::Encryption(e.to_string()))?;
 
         let mut result = nonce_bytes.to_vec();
         result.extend(ciphertext);
@@ -96,7 +94,7 @@ impl Storage {
 
     fn decrypt(&self, data: &[u8]) -> Result<Vec<u8>, StorageError> {
         if data.len() < 12 {
-            return Err(StorageError::EncryptionError("Data too short".into()));
+            return Err(StorageError::Encryption("Data too short".into()));
         }
 
         let key = Key::<Aes256Gcm>::from_slice(&self.key);
@@ -107,7 +105,7 @@ impl Storage {
 
         cipher
             .decrypt(nonce, ciphertext)
-            .map_err(|e| StorageError::EncryptionError(e.to_string()))
+            .map_err(|e| StorageError::Encryption(e.to_string()))
     }
 
     async fn open_db(&self) -> Result<IdbDatabase, StorageError> {
@@ -119,16 +117,12 @@ impl Storage {
             if !db.object_store_names().any(|n| n == DOCUMENTS_STORE) {
                 db.create_object_store(DOCUMENTS_STORE)?;
             }
-            if !db.object_store_names().any(|n| n == SETTINGS_STORE) {
-                db.create_object_store(SETTINGS_STORE)?;
-            }
-
             Ok(())
         }));
 
         db_req
             .await
-            .map_err(|e| StorageError::IdbError(format!("{:?}", e)))
+            .map_err(|e| StorageError::IndexedDb(format!("{:?}", e)))
     }
 
     pub async fn save_document(&self, doc: &Document) -> Result<(), StorageError> {
@@ -137,7 +131,7 @@ impl Storage {
         let store = tx.object_store(DOCUMENTS_STORE)?;
 
         let json =
-            serde_json::to_vec(doc).map_err(|e| StorageError::SerializationError(e.to_string()))?;
+            serde_json::to_vec(doc).map_err(|e| StorageError::Serialization(e.to_string()))?;
         let encrypted = self.encrypt(&json)?;
         let b64 = BASE64.encode(&encrypted);
 
@@ -158,10 +152,10 @@ impl Storage {
             if let Some(b64) = js_val.as_string() {
                 let encrypted = BASE64
                     .decode(&b64)
-                    .map_err(|e| StorageError::SerializationError(e.to_string()))?;
+                    .map_err(|e| StorageError::Serialization(e.to_string()))?;
                 let decrypted = self.decrypt(&encrypted)?;
                 let doc: Document = serde_json::from_slice(&decrypted)
-                    .map_err(|e| StorageError::SerializationError(e.to_string()))?;
+                    .map_err(|e| StorageError::Serialization(e.to_string()))?;
                 return Ok(Some(doc));
             }
         }
@@ -207,44 +201,5 @@ impl Storage {
         tx.await.into_result()?;
 
         Ok(())
-    }
-
-    pub async fn save_setting<T: Serialize>(
-        &self,
-        key: &str,
-        value: &T,
-    ) -> Result<(), StorageError> {
-        let db = self.open_db().await?;
-        let tx = db.transaction_on_one_with_mode(SETTINGS_STORE, IdbTransactionMode::Readwrite)?;
-        let store = tx.object_store(SETTINGS_STORE)?;
-
-        let json = serde_json::to_string(value)
-            .map_err(|e| StorageError::SerializationError(e.to_string()))?;
-
-        store.put_key_val(&JsValue::from_str(key), &JsValue::from_str(&json))?;
-        tx.await.into_result()?;
-
-        Ok(())
-    }
-
-    pub async fn get_setting<T: DeserializeOwned>(
-        &self,
-        key: &str,
-    ) -> Result<Option<T>, StorageError> {
-        let db = self.open_db().await?;
-        let tx = db.transaction_on_one(SETTINGS_STORE)?;
-        let store = tx.object_store(SETTINGS_STORE)?;
-
-        let result = store.get(&JsValue::from_str(key))?.await?;
-
-        if let Some(js_val) = result {
-            if let Some(json) = js_val.as_string() {
-                let value: T = serde_json::from_str(&json)
-                    .map_err(|e| StorageError::SerializationError(e.to_string()))?;
-                return Ok(Some(value));
-            }
-        }
-
-        Ok(None)
     }
 }
