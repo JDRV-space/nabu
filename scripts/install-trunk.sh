@@ -18,12 +18,12 @@ case "$(uname -s)-$(uname -m)" in
         readonly expected_sha256="f1ba0e3bbe24e0ae219c6d22c33e24e2825c1608dd27c2556e323495110f1a95"
         ;;
     Linux-aarch64)
-        readonly archive_url="https://github.com/trunk-rs/trunk/releases/download/v0.21.14/trunk-aarch64-unknown-linux-gnu.tar.gz"
-        readonly expected_sha256="b1d8e60e454f7fc182d9a4d95d1506ffbae947d8ba90f8f6f02da93b60f980f9"
+        readonly archive_url="https://github.com/trunk-rs/trunk/releases/download/v0.21.14/trunk-aarch64-unknown-linux-musl.tar.gz"
+        readonly expected_sha256="e8e2a2bb423ce6702ab9f4f02f8c9ae99d790f0301f7634e986b2dd8706019cc"
         ;;
     Linux-x86_64)
-        readonly archive_url="https://github.com/trunk-rs/trunk/releases/download/v0.21.14/trunk-x86_64-unknown-linux-gnu.tar.gz"
-        readonly expected_sha256="f2b4680cd239693a646a2795e4633c625328d7b2a044fbe749fa3a2fe9e7036b"
+        readonly archive_url="https://github.com/trunk-rs/trunk/releases/download/v0.21.14/trunk-x86_64-unknown-linux-musl.tar.gz"
+        readonly expected_sha256="a67f4054b249fe9acc5fabc25de1aebf19783aca3ad6ff64bf34d7da44d0ea20"
         ;;
     *)
         printf 'Unsupported platform for pinned Trunk release: %s-%s\n' \

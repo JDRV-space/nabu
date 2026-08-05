@@ -18,14 +18,34 @@ pub fn Upload() -> impl IntoView {
 
 #[component]
 pub fn UploadModal(on_close: impl Fn() + Clone + Send + Sync + 'static) -> impl IntoView {
-    let on_close_clone = on_close.clone();
+    let on_backdrop_click = on_close.clone();
+    let on_escape = on_close.clone();
 
     view! {
-        <div class="modal-backdrop" on:click=move |_| on_close_clone()>
-            <div class="modal glass-panel animate-scale-in" on:click=|e| e.stop_propagation()>
+        <div
+            class="modal-backdrop"
+            on:click=move |_| on_backdrop_click()
+            on:keydown=move |event: web_sys::KeyboardEvent| {
+                if event.key() == "Escape" {
+                    on_escape();
+                }
+            }
+        >
+            <div
+                class="modal glass-panel animate-scale-in"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="upload-dialog-title"
+                on:click=|e| e.stop_propagation()
+            >
                 <div class="modal-header">
-                    <h2>"Upload Document"</h2>
-                    <button class="btn-close" on:click=move |_| on_close()>"X"</button>
+                    <h2 id="upload-dialog-title">"Upload Document"</h2>
+                    <button
+                        class="btn-close"
+                        aria-label="Close upload dialog"
+                        autofocus=true
+                        on:click=move |_| on_close()
+                    >"X"</button>
                 </div>
                 <UploadZone />
             </div>
@@ -153,11 +173,11 @@ fn UploadZone() -> impl IntoView {
             </Show>
 
             <Show when=move || error.get().is_some()>
-                <p class="upload-error">{move || error.get().unwrap_or_default()}</p>
+                <p class="upload-error" role="alert">{move || error.get().unwrap_or_default()}</p>
             </Show>
 
             <Show when=move || success.get().is_some()>
-                <p class="upload-success">{move || success.get().unwrap_or_default()}</p>
+                <p class="upload-success" aria-live="polite">{move || success.get().unwrap_or_default()}</p>
             </Show>
         </div>
     }

@@ -10,6 +10,9 @@ assignees: ''
 
 A clear and concise description of the bug.
 
+> Do not disclose suspected security vulnerabilities here. Follow
+> [SECURITY.md](../../SECURITY.md) and use GitHub's private reporting flow.
+
 ## Steps to Reproduce
 
 1. Go to '...'

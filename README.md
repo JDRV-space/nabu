@@ -1,24 +1,30 @@
 # Nabu
 
-Browser-based RSVP speed reader. It flashes words at a chosen speed so you can read a document without moving your eyes across a page.
-
-Live app: https://nabu-reader.vercel.app
+Browser-based RSVP speed reader. It flashes words at a chosen speed so you can
+read a document without moving your eyes across a page. Document parsing and
+persistence happen in the browser.
 
 ## What It Does
 
-- Imports TXT, Markdown, PDF, and DOCX files.
+- Imports TXT, Markdown, PDF, and DOCX files up to 50 MiB.
 - Reads with RSVP at 100-1000 WPM.
 - Displays 1, 3, 5, 10, or 20 words per flash.
 - Highlights the Optimal Recognition Point in amber.
-- Stores documents locally in browser IndexedDB.
+- Stores encrypted document records in browser IndexedDB.
 - Supports fullscreen reading and keyboard controls.
 
 ## Run Locally
 
 Prerequisites:
 
-- rustup
-- Node.js and npm
+- macOS or Linux on arm64 or x86_64;
+- `rustup`;
+- Node.js 20 or newer with npm;
+- `curl`, `tar`, and either `sha256sum` or `shasum`.
+
+The pinned Trunk installer does not currently support native Windows. Other
+platforms require a manual Trunk installation and are not part of the tested
+build path.
 
 ```bash
 git clone https://github.com/JDRV-space/nabu.git
@@ -29,9 +35,14 @@ export PATH="${CARGO_HOME:-$HOME/.cargo}/bin:$PATH"
 trunk serve
 ```
 
-The app runs at `http://127.0.0.1:8080`.
+The app runs at `http://127.0.0.1:8080`; release output goes to `dist/`.
+`scripts/build.sh` installs the Rust toolchain from `rust-toolchain.toml`,
+vendors the locked parser assets, installs the pinned Trunk release, and runs a
+locked release build.
 
-Build output goes to `dist/`.
+Automated browser E2E coverage is not yet available. CI validates compilation,
+tests, dependency audits, parser limits, generated assets, and the release
+build, but it does not establish a browser support matrix.
 
 ## Keyboard Shortcuts
 
@@ -44,49 +55,35 @@ Build output goes to `dist/`.
 | F | Fullscreen |
 | ESC | Exit reader |
 
-## Limitations
+## Privacy And Limitations
 
-- Documents are stored in browser IndexedDB and encrypted with AES-GCM.
+- Documents are encrypted with AES-GCM before storage in browser IndexedDB.
 - The encryption key is stored in browser `localStorage` as `nabu_key`.
-- This is privacy against server upload. It is not protection against a compromised browser, same-origin script bug, browser extension, device, or user profile.
-- PDF.js and JSZip are copied from pinned npm packages and served from the same origin. They are not loaded from cdnjs at runtime.
-- Clearing site data can delete the library and the stored key.
-- PDF and DOCX parsing happens in the browser and can fail on malformed or unusual files.
-- PDF imports disable PDF.js evaluation and reject more than 2,000 pages or
-  more than 10 million extracted text characters.
-- DOCX imports reject ZIP64, encrypted or multi-volume archives, unsafe or
-  duplicate paths, more than 2,048 entries, more than 100 MiB total expanded
-  content, entries over 100:1 compression, and `word/document.xml` over 10 MiB.
+- This prevents server-side document retention. It does not protect against a
+  compromised browser, same-origin script bug, extension, device, or profile.
+- Clearing site data can delete the library and its encryption key.
+- PDF and DOCX parsing happens in the browser and can fail on malformed,
+  scanned, encrypted, or unusual files.
+- Google Fonts receives ordinary page-load request metadata; document content
+  is not sent to Google Fonts.
 - There is no account system, sync, sharing, or backup.
 
-## Project Layout
+Exact parser limits and security controls are maintained in the
+[technical specification](docs/SPEC.md).
 
-```text
-nabu/
-├── assets/                 # static assets, CSS, and vendored parser files
-├── src/
-│   ├── main.rs             # entry point
-│   ├── components/         # reader, library, settings, controls, upload
-│   ├── state/              # application state and signals
-│   ├── storage/            # IndexedDB and document encryption
-│   └── parser/             # PDF, DOCX, TXT, MD parsing
-├── docs/SPEC.md            # technical specification and known limits
-├── scripts/                # build scripts
-├── Cargo.toml
-├── .npmrc
-├── package.json
-├── package-lock.json
-├── Trunk.toml
-├── vercel.json
-└── LICENSE
-```
+## Documentation Ownership
 
-## Documentation
+This README owns project orientation and support status; `docs/SPEC.md` owns
+stable technical contracts. Code, tests, configuration, and verified
+deployments own current behavior. See [AGENTS.md](AGENTS.md) for maintenance
+rules.
 
-- [Project specification](docs/SPEC.md)
+- [Contribution guide](CONTRIBUTING.md)
+- [Security policy](SECURITY.md)
+- [Document parser assets](assets/document-parsers/README.md)
 
 ## License
 
-Apache License 2.0. See [LICENSE](LICENSE).
-
-Attribution notices are listed in [NOTICE](NOTICE).
+Nabu is licensed under Apache License 2.0. See [LICENSE](LICENSE) and
+[NOTICE](NOTICE). Parser dependency license texts are distributed with the
+vendored assets.

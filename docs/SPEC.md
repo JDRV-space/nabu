@@ -19,10 +19,13 @@ index.html
   loads same-origin parser assets, CSS, and the Trunk-generated WASM app
 
 src/main.rs
-  mounts the Leptos app and routes between library, reader, settings, and stats
+  mounts the Leptos app
+
+src/components/mod.rs
+  routes between the library, reader, and stats views
 
 src/components/
-  renders upload, library, reader controls, settings, reader view, and stats UI
+  renders upload, library, reader controls, reader view, and stats UI
 
 src/state/
   owns application state shared by Leptos signals
@@ -77,9 +80,10 @@ the document library and the stored key.
   data needed by the app.
 - There is no remote document upload path in the application code.
 
-The current build does not enforce subresource integrity for Trunk-generated
-WASM or JavaScript output. Do not describe SRI as complete unless the generated
-`dist/` output includes verified integrity attributes and matching CSP support.
+Trunk 0.21.14 generates integrity attributes for its generated JavaScript, CSS,
+and WebAssembly resources by default. Parser scripts are same-origin assets and
+do not currently use integrity attributes. Deployment security claims remain
+unverified until the published artifact and response headers have been checked.
 
 ## Parser Dependencies
 
@@ -94,22 +98,25 @@ WASM or JavaScript output. Do not describe SRI as complete unless the generated
 - PDF and DOCX extraction can fail on malformed, scanned, encrypted, or unusual
   files.
 - Large files are constrained by browser memory and IndexedDB behavior.
-- Reading progress and stats are limited to the current browser profile.
+- The reader calculates session progress for display but does not write the
+  document's progress or last-read fields back to IndexedDB.
+- The stats view uses default in-memory values; reading sessions do not update
+  or persist those statistics.
 - There is no account recovery or document backup.
 
 ## Validation
 
-Useful lightweight checks:
+The canonical full validation path is:
 
 ```bash
-cargo fmt --check
-cargo test
-cargo check --target wasm32-unknown-unknown
 npm test
-npm run prepare:assets
-trunk build
+cargo fmt --all -- --check
+cargo test --locked
+cargo clippy --all-targets --locked
+./scripts/build.sh
 ```
 
-For docs-only changes, `git diff --check` is usually sufficient. Browser
-behavior still needs manual validation with representative TXT, Markdown, PDF,
-and DOCX files.
+`scripts/build.sh` installs locked npm dependencies, regenerates browser parser
+assets, and performs the pinned Trunk release build. For docs-only changes, run
+`git diff --check` and verify changed links. Browser behavior still needs manual
+validation with representative TXT, Markdown, PDF, and DOCX files.

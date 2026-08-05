@@ -1,6 +1,7 @@
 {
   "name": "nabu",
   "version": "0.1.0",
+  "private": true,
   "description": "Browser-based RSVP speed reader built with Rust and WebAssembly",
   "license": "Apache-2.0",
   "repository": {

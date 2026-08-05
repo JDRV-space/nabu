@@ -1,26 +1,25 @@
 ## Summary
 
-Brief description of the changes.
+Describe the behavior changed and why.
 
-## Type of Change
+## Type Of Change
 
-- [ ] Bug fix (non-breaking change that fixes an issue)
-- [ ] New feature (non-breaking change that adds functionality)
-- [ ] Breaking change (fix or feature that would cause existing functionality to change)
-- [ ] Documentation update
+- [ ] Bug fix
+- [ ] New feature
+- [ ] Breaking change
+- [ ] Documentation or configuration
 
-## Changes Made
+## Validation
 
--
+List the relevant commands and results. Mandatory automated checks are owned by
+CI; contributor commands are documented in `CONTRIBUTING.md`.
 
-## Testing
+- [ ] Relevant automated tests passed
+- [ ] Release build passed when runtime or build behavior changed
+- [ ] Browser and version recorded when UI behavior changed
+- [ ] Security and privacy claims verified when those surfaces changed
 
-- [ ] Tested locally with `trunk serve`
-- [ ] Verified no compiler warnings (`cargo build --target wasm32-unknown-unknown`)
-- [ ] Tested in Chrome
-- [ ] Tested in Firefox
-- [ ] Tested in Safari
+## Evidence
 
-## Screenshots
-
-If applicable, add screenshots showing the changes.
+Add screenshots, recordings, logs, or links only when they materially help
+reviewers evaluate the change.

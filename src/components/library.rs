@@ -34,7 +34,6 @@ pub fn Library() -> impl IntoView {
             <header class="library-header glass-panel">
                 <h1 class="library-title">"NABU"</h1>
                 <div class="header-actions">
-                    <input type="text" placeholder="Search..." class="search-input" />
                     <button class="btn btn-primary" on:click=move |_| set_show_upload.set(true)>"+ Add"</button>
                 </div>
             </header>
@@ -136,6 +135,7 @@ fn DocumentCard(doc: Document) -> impl IntoView {
         .clone()
         .unwrap_or_else(|| "Never read".to_string());
     let word_count_display = format!("{} words", doc.word_count);
+    let delete_label = format!("Delete {}", doc.title);
 
     view! {
         <div class="document-card-wrapper">
@@ -156,7 +156,7 @@ fn DocumentCard(doc: Document) -> impl IntoView {
                 </div>
                 <div class="card-date">{last_read_display}</div>
             </a>
-            <button class="btn-delete" on:click=on_delete_click title="Delete document">
+            <button class="btn-delete" on:click=on_delete_click aria-label=delete_label>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14"/>
                 </svg>

@@ -53,6 +53,11 @@ body {
     position: relative;
 }
 
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+    outline: 3px solid var(--amber);
+    outline-offset: 3px;
+}
+
 body::before {
     content: '';
     position: fixed;
@@ -127,7 +132,6 @@ input[type="range"] {
     height: 4px;
     background: var(--border);
     border-radius: 2px;
-    outline: none;
 }
 
 input[type="range"]::-webkit-slider-thumb {
@@ -1060,11 +1064,6 @@ input[type="range"]::-moz-range-thumb {
     transition: width 100ms linear;
 }
 
-/* ==================== FOCUS STATES ==================== */
-.reader-container:focus {
-    outline: none;
-}
-
 /* ==================== FULLSCREEN MODE ==================== */
 .reader-container.fullscreen-mode .reader-controls {
     display: none !important;
@@ -1112,5 +1111,14 @@ input[type="range"]::-moz-range-thumb {
         transform: none;
         border-radius: 0;
         justify-content: center;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
     }
 }

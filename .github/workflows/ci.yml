@@ -20,6 +20,14 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      - run: npm run prepare:assets
+      - name: Verify generated parser assets
+        run: >-
+          git diff --exit-code --
+          assets/document-parsers/pdf.min.mjs
+          assets/document-parsers/pdf.worker.min.mjs
+          assets/document-parsers/jszip.min.js
+          assets/document-parsers/THIRD_PARTY_LICENSES.txt
       - run: npm test
       - run: npm audit --audit-level=high
       - run: cargo fmt --all -- --check

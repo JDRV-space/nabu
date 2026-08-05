@@ -2,12 +2,16 @@ Nabu
 Copyright 2026 JDRV-space
 
 This product includes software and documentation developed by JDRV-space.
-Please retain this attribution in substantial redistributions or derived works.
 
 This product includes same-origin browser parser assets copied from pinned npm
-packages:
+packages. Their exact versions are recorded in package-lock.json:
 
 - pdfjs-dist 4.10.38, licensed Apache-2.0.
-- JSZip 3.10.1, licensed MIT or GPL-3.0-or-later.
+- JSZip 3.10.1, used under the MIT license.
 
-The exact package versions are recorded in package-lock.json.
+The parser dependency license texts are distributed in
+assets/document-parsers/THIRD_PARTY_LICENSES.txt.
+
+Compiled Rust dependencies remain subject to their respective upstream
+licenses. Their exact versions are recorded in Cargo.lock; upstream package
+metadata and license files own their license terms.
